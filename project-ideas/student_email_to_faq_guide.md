@@ -10,16 +10,16 @@ This guide helps instructors automate the process of collecting student question
 **Purpose**: Automatically move student emails to a specific folder.
 
 **Rule Logic**:
-- Condition 1: Sender address includes "@student.university.edu"
+- Condition 1: Sender address includes "@bruins.belmont.edu"
 - Condition 2: Body contains "question" OR "help" OR "confused"
-- Action: Move message to folder “Student Questions”
+- Action: Move message to folder called “Student Questions”
 
 ---
 
 ## ✅ STEP 2: Build Power Automate Flow
 
 **Excel Setup**:
-Create an Excel file with a table named `StudentEmails` with columns:
+Create an Excel file with a table named `StudentEmails` with the following columns:
 
 | Timestamp | From | Subject | Body | Keywords |
 
@@ -28,11 +28,39 @@ Create an Excel file with a table named `StudentEmails` with columns:
 2. **Get email content**: From, Subject, Body, Timestamp
 3. **Optional Condition**: Check if the sender’s email contains student domain
 4. **Detect Keywords**: Tag emails using Compose or Expression step
-5. **Append Row**: Write to Excel file stored in OneDrive or SharePoint
+5. **Append Row**: Write to Excel file stored in OneDrive (or SharePoint which will be better later)
 
 ---
 
-## ✅ STEP 3: Python Script for Analysis & FAQ Suggestions
+## ✅ STEP 3: Anonymize Student Data (FERPA-safe)
+
+**Purpose**: Remove personally identifiable information before processing.
+
+**How**:
+- Strip or replace student email addresses and names.
+- Remove course-specific codes if they could be re-identifiable.
+- Assign a generic ID like "Student001", "Student002", etc., for grouping.
+
+**Python Example**:
+
+```python
+# Example to anonymize email addresses and names
+import pandas as pd
+import re
+
+df = pd.read_excel("student_emails.xlsx")
+
+# Replace email with generic ID
+df['StudentID'] = ["Student" + str(i+1).zfill(3) for i in range(len(df))]
+df.drop(columns=['From'], inplace=True)
+
+# Remove names or emails in the body using a regex
+df['Body'] = df['Body'].apply(lambda x: re.sub(r"[\w.-]+@[\w.-]+", "[email removed]", str(x)))
+```
+
+---
+
+## ✅ STEP 4: Python Script for Analysis & FAQ Suggestions
 
 **Install Required Libraries**:
 
@@ -126,14 +154,3 @@ print(suggest_faqs(emails_topic_0[:5]))
 - Schedule Python script weekly
 - Output FAQs to Word/HTML or LMS
 - Save results back to Excel or SharePoint
-- Build a dashboard with Streamlit or Power BI
-
----
-
-## ✅ Best File Type for This Guide
-
-- **Markdown (.md)**: Best for easy readability and GitHub/wiki use.
-- **PDF**: Best for sharing with non-technical staff.
-- **HTML or Streamlit**: Ideal for turning into interactive dashboards.
-
-Let us know if you’d like it in another format.
